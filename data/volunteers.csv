@@ -1,0 +1,11 @@
+Name,Email,Required_Shifts,Qualified_Roles,Notes
+John Smith,john.smith@example.com,3,Manager|Caller|Worker,Family of 4
+Mary Johnson,mary.j@example.com,2,Manager|Assistant Manager|Worker,Family of 3
+Bob Williams,bob.w@example.com,2,Caller|Worker,Family of 3
+Sarah Davis,sarah.d@example.com,1,Worker,Single member
+Mike Brown,mike.b@example.com,3,Manager|Caller|Assistant Manager|Worker,Family of 5
+Lisa Garcia,lisa.g@example.com,2,Assistant Manager|Worker,Family of 3
+Tom Martinez,tom.m@example.com,1,Worker,Single member
+Emily Wilson,emily.w@example.com,2,Caller|Worker,Family of 2
+David Lee,david.l@example.com,1,Worker,Single member
+Jennifer Taylor,jennifer.t@example.com,3,Manager|Assistant Manager|Caller|Worker,Family of 4

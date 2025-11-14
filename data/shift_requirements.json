@@ -1,0 +1,70 @@
+{
+  "shifts": [
+    {
+      "date": "2025-01-15",
+      "time": "6:00 PM",
+      "location": "Main Hall",
+      "roles": {
+        "Caller": 1,
+        "Manager": 1,
+        "Assistant Manager": 1,
+        "Worker": 5
+      }
+    },
+    {
+      "date": "2025-01-17",
+      "time": "6:00 PM",
+      "location": "Main Hall",
+      "roles": {
+        "Caller": 1,
+        "Manager": 1,
+        "Assistant Manager": 1,
+        "Worker": 5
+      }
+    },
+    {
+      "date": "2025-01-22",
+      "time": "6:00 PM",
+      "location": "Main Hall",
+      "roles": {
+        "Caller": 1,
+        "Manager": 1,
+        "Assistant Manager": 1,
+        "Worker": 5
+      }
+    },
+    {
+      "date": "2025-01-24",
+      "time": "6:00 PM",
+      "location": "Main Hall",
+      "roles": {
+        "Caller": 1,
+        "Manager": 1,
+        "Assistant Manager": 1,
+        "Worker": 5
+      }
+    },
+    {
+      "date": "2025-01-29",
+      "time": "6:00 PM",
+      "location": "Main Hall",
+      "roles": {
+        "Caller": 1,
+        "Manager": 1,
+        "Assistant Manager": 1,
+        "Worker": 5
+      }
+    },
+    {
+      "date": "2025-01-31",
+      "time": "6:00 PM",
+      "location": "Main Hall",
+      "roles": {
+        "Caller": 1,
+        "Manager": 1,
+        "Assistant Manager": 1,
+        "Worker": 5
+      }
+    }
+  ]
+}

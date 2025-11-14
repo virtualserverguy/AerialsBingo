@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Data files (keep examples, ignore actual exports)
+data/*_export.csv
+data/signupgenius_*.csv
+!data/example_signupgenius_export.csv
+
+# Reports
+reports/
+*.txt
+!README.md
+!USAGE_GUIDE.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Misc
+*.log
