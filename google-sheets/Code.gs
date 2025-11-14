@@ -10,6 +10,7 @@ function onOpen() {
     .addItem('🚀 Initial Setup (Run First!)', 'setupSpreadsheet')
     .addSeparator()
     .addItem('📅 Generate This Month\'s Schedule', 'generateMonthlySchedule')
+    .addItem('⚖️ Balance Staff Distribution', 'balanceStaffDistribution')
     .addSeparator()
     .addItem('📥 Import SignupGenius Data', 'showImportDialog')
     .addItem('✅ Run Verification', 'runVerification')
@@ -31,7 +32,7 @@ function onOpen() {
 function checkSheetsExist() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const requiredSheets = ['Volunteers', 'Shift Templates', 'Monthly Schedule',
-                          'SignupGenius Import', 'Reports', 'Config'];
+                          'SignupGenius Import', 'Reports', 'Config', 'Special Events'];
 
   for (let sheetName of requiredSheets) {
     if (!ss.getSheetByName(sheetName)) {
@@ -50,6 +51,7 @@ function setupSpreadsheet() {
   // Create sheets if they don't exist
   createSheetIfNotExists('Volunteers');
   createSheetIfNotExists('Shift Templates');
+  createSheetIfNotExists('Special Events');
   createSheetIfNotExists('Monthly Schedule');
   createSheetIfNotExists('SignupGenius Import');
   createSheetIfNotExists('Reports');
@@ -60,6 +62,9 @@ function setupSpreadsheet() {
 
   // Setup Shift Templates sheet
   setupShiftTemplatesSheet();
+
+  // Setup Special Events sheet
+  setupSpecialEventsSheet();
 
   // Setup Config sheet
   setupConfigSheet();
@@ -74,7 +79,8 @@ function setupSpreadsheet() {
     'Next steps:\n' +
     '1. Update the Volunteers sheet with your volunteer list\n' +
     '2. Update Shift Templates with your recurring schedules\n' +
-    '3. Use the menu: Bingo Scheduler > Generate This Month\'s Schedule',
+    '3. Mark special event dates in the Special Events sheet\n' +
+    '4. Use the menu: Bingo Scheduler > Generate This Month\'s Schedule',
     SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
@@ -178,6 +184,49 @@ function setupShiftTemplatesSheet() {
 }
 
 /**
+ * Setup Special Events sheet
+ */
+function setupSpecialEventsSheet() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Special Events');
+  sheet.clear();
+
+  const headers = [
+    ['Date', 'Event Type', 'Description']
+  ];
+
+  sheet.getRange('A1:C1').setValues(headers)
+    .setBackground('#f59e0b')
+    .setFontColor('#ffffff')
+    .setFontWeight('bold');
+
+  // Sample data
+  const sampleData = [
+    ['2025-01-15', 'Super Bingo', 'Q1 Super Bingo Night'],
+    ['2025-04-10', 'Must Go', 'Special Must Go Event'],
+  ];
+
+  sheet.getRange(2, 1, sampleData.length, 3).setValues(sampleData);
+
+  // Add data validation for Event Type
+  const eventTypeRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['Super Bingo', 'Must Go'], true)
+    .build();
+
+  sheet.getRange('B2:B1000').setDataValidation(eventTypeRule);
+
+  // Format dates
+  sheet.getRange('A2:A1000').setNumberFormat('yyyy-mm-dd');
+
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, 3);
+
+  // Add instructions
+  sheet.getRange('A4').setValue('Add dates for Super Bingo and Must Go events. These will be marked when generating monthly schedules.')
+    .setFontStyle('italic')
+    .setFontColor('#666666');
+}
+
+/**
  * Setup Config sheet
  */
 function setupConfigSheet() {
@@ -190,6 +239,8 @@ function setupConfigSheet() {
     ['Current Season End', '2025-06-30', 'End of volunteer season (June)'],
     ['Default Location', 'Main Hall', 'Default location for shifts'],
     ['Default Time', '6:00 PM', 'Default shift time'],
+    ['Super Bingo Value', '1.5', 'Multiplier for Super Bingo shifts (1.5x regular)'],
+    ['Must Go Value', '2.0', 'Multiplier for Must Go shifts (2x regular)'],
   ];
 
   sheet.getRange(1, 1, config.length, 3).setValues(config);
@@ -210,16 +261,23 @@ function setupMonthlyScheduleSheet() {
   sheet.clear();
 
   const headers = [
-    ['Date', 'Day of Week', 'Time', 'Location', 'Callers Needed', 'Managers Needed', 'Asst Managers Needed', 'Workers Needed', 'Notes']
+    ['Date', 'Day of Week', 'Time', 'Location', 'Event Type', 'Callers Needed', 'Managers Needed', 'Asst Managers Needed', 'Workers Needed', 'Notes']
   ];
 
-  sheet.getRange('A1:I1').setValues(headers)
+  sheet.getRange('A1:J1').setValues(headers)
     .setBackground('#f59e0b')
     .setFontColor('#ffffff')
     .setFontWeight('bold');
 
+  // Add data validation for Event Type
+  const eventTypeRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['Regular', 'Super Bingo', 'Must Go'], true)
+    .build();
+
+  sheet.getRange('E2:E1000').setDataValidation(eventTypeRule);
+
   sheet.setFrozenRows(1);
-  sheet.autoResizeColumns(1, 9);
+  sheet.autoResizeColumns(1, 10);
 }
 
 /**

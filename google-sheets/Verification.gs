@@ -71,21 +71,55 @@ View detailed reports using the menu:
  * Verify volunteer compliance and shift coverage
  */
 function verifyCompliance(volunteers, shifts, signups) {
+  // Get shift multipliers from config
+  const config = getConfig();
+  const superBingoValue = parseFloat(config['Super Bingo Value']) || 1.5;
+  const mustGoValue = parseFloat(config['Must Go Value']) || 2.0;
+
+  // Build shift type map
+  const shiftTypeMap = {};
+  shifts.forEach(shift => {
+    const key = `${shift.date}_${shift.time}`;
+    shiftTypeMap[key] = shift.eventType || 'Regular';
+  });
+
   // Build volunteer signup counts
   const volunteerSignups = {};
   volunteers.forEach(v => {
     volunteerSignups[v.email.toLowerCase()] = {
       volunteer: v,
       signups: [],
+      regularCount: 0,
+      superBingoCount: 0,
+      mustGoCount: 0,
+      weightedTotal: 0,
       required: v.requiredShifts
     };
   });
 
-  // Count signups per volunteer
+  // Count signups per volunteer with shift type tracking
   signups.forEach(signup => {
     const email = signup.email.toLowerCase();
     if (volunteerSignups[email]) {
+      const key = `${signup.date}_${signup.time}`;
+      const eventType = shiftTypeMap[key] || 'Regular';
+
+      // Add event type to signup
+      signup.eventType = eventType;
+
       volunteerSignups[email].signups.push(signup);
+
+      // Count by type
+      if (eventType === 'Super Bingo') {
+        volunteerSignups[email].superBingoCount++;
+        volunteerSignups[email].weightedTotal += superBingoValue;
+      } else if (eventType === 'Must Go') {
+        volunteerSignups[email].mustGoCount++;
+        volunteerSignups[email].weightedTotal += mustGoValue;
+      } else {
+        volunteerSignups[email].regularCount++;
+        volunteerSignups[email].weightedTotal += 1;
+      }
     }
   });
 
@@ -94,7 +128,9 @@ function verifyCompliance(volunteers, shifts, signups) {
   let nonCompliantCount = 0;
 
   Object.values(volunteerSignups).forEach(vs => {
-    if (vs.signups.length >= vs.required) {
+    // Check if total shifts (not weighted) meets requirement
+    const totalShifts = vs.signups.length;
+    if (totalShifts >= vs.required) {
       compliantCount++;
     } else {
       nonCompliantCount++;
@@ -200,7 +236,7 @@ function getMonthlyShifts() {
     return [];
   }
 
-  const data = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
+  const data = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
 
   return data
     .filter(row => row[0]) // Filter out empty rows
@@ -209,11 +245,12 @@ function getMonthlyShifts() {
       dayOfWeek: row[1],
       time: row[2],
       location: row[3],
-      callersNeeded: parseInt(row[4]) || 0,
-      managersNeeded: parseInt(row[5]) || 0,
-      asstManagersNeeded: parseInt(row[6]) || 0,
-      workersNeeded: parseInt(row[7]) || 0,
-      notes: row[8]
+      eventType: row[4] || 'Regular',
+      callersNeeded: parseInt(row[5]) || 0,
+      managersNeeded: parseInt(row[6]) || 0,
+      asstManagersNeeded: parseInt(row[7]) || 0,
+      workersNeeded: parseInt(row[8]) || 0,
+      notes: row[9]
     }));
 }
 
@@ -294,4 +331,27 @@ function showImportDialog() {
   SpreadsheetApp.getActiveSpreadsheet()
     .getSheetByName('SignupGenius Import')
     .activate();
+}
+
+/**
+ * Get configuration values
+ */
+function getConfig() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) {
+    return {};
+  }
+
+  const data = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  const config = {};
+
+  data.forEach(row => {
+    if (row[0]) {
+      config[row[0]] = row[1];
+    }
+  });
+
+  return config;
 }

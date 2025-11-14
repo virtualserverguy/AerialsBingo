@@ -74,7 +74,6 @@ function generateMonthlySchedule() {
 function generateScheduleForMonth(targetDate) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const scheduleSheet = ss.getSheetByName('Monthly Schedule');
-  const templatesSheet = ss.getSheetByName('Shift Templates');
 
   // Clear existing schedule (keep headers)
   const lastRow = scheduleSheet.getLastRow();
@@ -82,11 +81,15 @@ function generateScheduleForMonth(targetDate) {
     scheduleSheet.deleteRows(2, lastRow - 1);
   }
 
-  // Get templates
+  // Get templates and special events
   const templates = getShiftTemplates();
+  const specialEvents = getSpecialEvents();
 
   // Get recurring templates (by day of week)
   const recurringTemplates = templates.filter(t => t.dayOfWeek !== 'Special' && t.active);
+
+  // Get special event template (for enhanced staffing)
+  const specialTemplate = templates.find(t => t.dayOfWeek === 'Special' && t.active);
 
   // Generate shifts for each day in the month
   const year = targetDate.getFullYear();
@@ -97,22 +100,42 @@ function generateScheduleForMonth(targetDate) {
 
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
+    const dateStr = Utilities.formatDate(date, Session.getScriptTimeZone(), 'yyyy-MM-dd');
     const dayOfWeek = Utilities.formatDate(date, Session.getScriptTimeZone(), 'EEEE');
+
+    // Check if this date is a special event
+    const specialEvent = specialEvents.find(e => e.date === dateStr);
 
     // Find matching template for this day of week
     const matchingTemplates = recurringTemplates.filter(t => t.dayOfWeek === dayOfWeek);
 
     matchingTemplates.forEach(template => {
+      let eventType = 'Regular';
+      let callers = template.callersNeeded;
+      let managers = template.managersNeeded;
+      let asstManagers = template.asstManagersNeeded;
+      let workers = template.workersNeeded;
+
+      // Override with special event template if applicable
+      if (specialEvent && specialTemplate) {
+        eventType = specialEvent.eventType;
+        callers = specialTemplate.callersNeeded;
+        managers = specialTemplate.managersNeeded;
+        asstManagers = specialTemplate.asstManagersNeeded;
+        workers = specialTemplate.workersNeeded;
+      }
+
       shifts.push({
         date: date,
         dayOfWeek: dayOfWeek,
         time: template.time,
         location: template.location,
-        callersNeeded: template.callersNeeded,
-        managersNeeded: template.managersNeeded,
-        asstManagersNeeded: template.asstManagersNeeded,
-        workersNeeded: template.workersNeeded,
-        notes: template.templateName
+        eventType: eventType,
+        callersNeeded: callers,
+        managersNeeded: managers,
+        asstManagersNeeded: asstManagers,
+        workersNeeded: workers,
+        notes: specialEvent ? `${eventType} - ${specialEvent.description}` : template.templateName
       });
     });
   }
@@ -127,6 +150,7 @@ function generateScheduleForMonth(targetDate) {
       shift.dayOfWeek,
       shift.time,
       shift.location,
+      shift.eventType,
       shift.callersNeeded,
       shift.managersNeeded,
       shift.asstManagersNeeded,
@@ -134,21 +158,52 @@ function generateScheduleForMonth(targetDate) {
       shift.notes
     ]);
 
-    scheduleSheet.getRange(2, 1, data.length, 9).setValues(data);
+    scheduleSheet.getRange(2, 1, data.length, 10).setValues(data);
 
     // Format dates
     scheduleSheet.getRange(2, 1, data.length, 1).setNumberFormat('yyyy-mm-dd');
 
-    // Alternate row colors
+    // Alternate row colors and highlight special events
     for (let i = 0; i < data.length; i++) {
       const row = i + 2;
-      if (i % 2 === 0) {
-        scheduleSheet.getRange(row, 1, 1, 9).setBackground('#f9fafb');
+      const eventType = data[i][4]; // Event Type column
+
+      if (eventType === 'Super Bingo') {
+        scheduleSheet.getRange(row, 1, 1, 10).setBackground('#fef3c7'); // Light yellow
+      } else if (eventType === 'Must Go') {
+        scheduleSheet.getRange(row, 1, 1, 10).setBackground('#fed7d7'); // Light red
+      } else if (i % 2 === 0) {
+        scheduleSheet.getRange(row, 1, 1, 10).setBackground('#f9fafb');
       }
     }
   }
 
-  scheduleSheet.autoResizeColumns(1, 9);
+  scheduleSheet.autoResizeColumns(1, 10);
+}
+
+/**
+ * Get special events from Special Events sheet
+ */
+function getSpecialEvents() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Special Events');
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) {
+    return [];
+  }
+
+  const data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+
+  return data
+    .filter(row => row[0]) // Filter out empty rows
+    .map(row => {
+      const dateObj = new Date(row[0]);
+      return {
+        date: Utilities.formatDate(dateObj, Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+        eventType: row[1],
+        description: row[2]
+      };
+    });
 }
 
 /**

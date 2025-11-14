@@ -48,8 +48,8 @@ function showComplianceReport() {
 
     row++;
 
-    const headers = [['Name', 'Email', 'Required', 'Signed Up', 'Shortfall', 'Notes']];
-    sheet.getRange(row, 1, 1, 6).setValues(headers)
+    const headers = [['Name', 'Email', 'Required', 'Total', 'Regular', 'Super Bingo', 'Must Go', 'Weighted', 'Shortfall']];
+    sheet.getRange(row, 1, 1, 9).setValues(headers)
       .setFontWeight('bold')
       .setBackground('#eee');
 
@@ -60,11 +60,14 @@ function showComplianceReport() {
       vs.volunteer.email,
       vs.required,
       vs.signups.length,
-      vs.required - vs.signups.length,
-      vs.volunteer.notes
+      vs.regularCount || 0,
+      vs.superBingoCount || 0,
+      vs.mustGoCount || 0,
+      (vs.weightedTotal || 0).toFixed(1),
+      vs.required - vs.signups.length
     ]);
 
-    sheet.getRange(row, 1, data.length, 6).setValues(data);
+    sheet.getRange(row, 1, data.length, 9).setValues(data);
     row += data.length + 2;
   }
 
@@ -82,8 +85,8 @@ function showComplianceReport() {
 
     row++;
 
-    const headers = [['Name', 'Email', 'Required', 'Signed Up']];
-    sheet.getRange(row, 1, 1, 4).setValues(headers)
+    const headers = [['Name', 'Email', 'Required', 'Total', 'Regular', 'Super Bingo', 'Must Go', 'Weighted']];
+    sheet.getRange(row, 1, 1, 8).setValues(headers)
       .setFontWeight('bold')
       .setBackground('#eee');
 
@@ -93,16 +96,20 @@ function showComplianceReport() {
       vs.volunteer.name,
       vs.volunteer.email,
       vs.required,
-      vs.signups.length
+      vs.signups.length,
+      vs.regularCount || 0,
+      vs.superBingoCount || 0,
+      vs.mustGoCount || 0,
+      (vs.weightedTotal || 0).toFixed(1)
     ]);
 
-    sheet.getRange(row, 1, data.length, 4).setValues(data);
+    sheet.getRange(row, 1, data.length, 8).setValues(data);
   }
 
-  sheet.autoResizeColumns(1, 6);
+  sheet.autoResizeColumns(1, 9);
   sheet.activate();
 
-  ui.alert('Report Generated', 'Compliance report has been generated in the Reports sheet.', ui.ButtonSet.OK);
+  ui.alert('Report Generated', 'Compliance report has been generated in the Reports sheet.\n\nNote: Weighted values reflect Super Bingo (1.5x) and Must Go (2x) multipliers.', ui.ButtonSet.OK);
 }
 
 /**
