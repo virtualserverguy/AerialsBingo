@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aerials Bingo Shift Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 50px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .tool-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .tool-icon {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+        }
+
+        .tool-card h2 {
+            color: #2d3748;
+            font-size: 1.4em;
+            margin-bottom: 12px;
+        }
+
+        .tool-card p {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .workflow {
+            background: #edf2f7;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .workflow h3 {
+            color: #2d3748;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .step {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content h4 {
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .step-content p {
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Aerials Bingo Shift Scheduler</h1>
+            <p>Automated volunteer shift management and verification</p>
+        </div>
+
+        <div class="content">
+            <div class="tools-grid">
+                <div class="tool-card" onclick="window.location.href='volunteer_manager.html'">
+                    <div class="tool-icon">👥</div>
+                    <h2>Volunteer Manager</h2>
+                    <p>Add and manage volunteers with their shift requirements and role qualifications.</p>
+                    <a href="volunteer_manager.html" class="btn">Open Manager</a>
+                </div>
+
+                <div class="tool-card" onclick="window.location.href='shift_builder.html'">
+                    <div class="tool-icon">📅</div>
+                    <h2>Shift Builder</h2>
+                    <p>Create your shift schedule with dates, times, and staffing requirements.</p>
+                    <a href="shift_builder.html" class="btn">Build Schedule</a>
+                </div>
+            </div>
+
+            <div class="workflow">
+                <h3>How It Works</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Set Up Volunteers</h4>
+                            <p>Use the Volunteer Manager to add volunteers and specify how many shifts each person needs to work.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Create Shift Schedule</h4>
+                            <p>Use the Shift Builder to define your bingo nights with required roles (caller, manager, workers, etc.).</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Collect SignupGenius Data</h4>
+                            <p>Have volunteers sign up using SignupGenius, then export the signup data as CSV.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Verify Compliance</h4>
+                            <p>Run the verification tool to check who's met their requirements and which shifts need coverage.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #fff5f5; border-left: 4px solid #f56565; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="color: #c53030; margin-bottom: 10px;">📋 Python Verification Tool</h4>
+                <p style="color: #742a2a; margin-bottom: 15px;">After exporting your data files, run the verification script:</p>
+                <code style="background: #2d3748; color: #48bb78; padding: 12px; display: block; border-radius: 6px; font-family: 'Courier New', monospace;">
+                    python verify_shifts.py --signupgenius data/signupgenius_export.csv
+                </code>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="USAGE_GUIDE.md" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                    📖 Read the Full Usage Guide
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Bingo Shift Scheduler • Built for Aerials Bingo Hall</p>
+        </div>
+    </div>
+</body>
+</html>

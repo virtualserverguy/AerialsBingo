@@ -1,13 +1,36 @@
 # Bingo Shift Verification System - Usage Guide
 
+## Two Ways to Use This System
+
+### Option 1: Web Interfaces (Recommended - No Coding Required!)
+
+The easiest way to set up your data is using the web-based interfaces:
+
+1. **Open `index.html`** in your web browser to access the main dashboard
+2. **Use Volunteer Manager** (`volunteer_manager.html`):
+   - Click "Add/Edit Volunteer" to add each volunteer
+   - Set their required shifts (1, 2, or 3)
+   - Check which roles they're qualified for
+   - Download the CSV file and save it as `data/volunteers.csv`
+3. **Use Shift Builder** (`shift_builder.html`):
+   - Add each shift with date, time, and location
+   - Set how many of each role you need (callers, managers, workers, etc.)
+   - Download the JSON file and save it as `data/shift_requirements.json`
+
+Then proceed to run the verification (see below).
+
+### Option 2: Manual File Editing (Advanced)
+
+If you prefer editing files directly, you can manually create/edit the CSV and JSON files. See the "Data File Formats" section below for details.
+
 ## Quick Start
 
-1. **Install dependencies**:
+1. **Install Python dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Prepare your data files**:
+2. **Prepare your data files** (using web interfaces or manual editing):
    - `data/volunteers.csv` - Your volunteer list with requirements
    - `data/shift_requirements.json` - Your shift schedules and role needs
    - Export your SignupGenius data as CSV
