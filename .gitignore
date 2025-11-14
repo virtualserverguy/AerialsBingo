@@ -16,9 +16,8 @@ data/signupgenius_*.csv
 
 # Reports
 reports/
-*.txt
-!README.md
-!USAGE_GUIDE.md
+reports/*.txt
+!requirements.txt
 
 # IDE
 .vscode/
