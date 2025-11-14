@@ -17,10 +17,25 @@ function showComplianceReport() {
 
   const data = JSON.parse(lastVerification);
   const volunteerSignups = data.volunteerSignups;
+  const verificationDate = data.verificationDate || new Date().toISOString();
+  const scheduleSheetName = data.scheduleSheetName || '';
 
-  // Generate report in Reports sheet
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Reports');
-  sheet.clear();
+  // Extract month from schedule name
+  const monthMatch = scheduleSheetName.match(/^(.+) Schedule$/);
+  const monthName = monthMatch ? monthMatch[1] : Utilities.formatDate(new Date(verificationDate), Session.getScriptTimeZone(), 'MMM yyyy');
+
+  // Create dated report sheet
+  const reportSheetName = `Report - ${monthName}`;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Delete existing report for this month if it exists
+  let sheet = ss.getSheetByName(reportSheetName);
+  if (sheet) {
+    ss.deleteSheet(sheet);
+  }
+
+  // Create new report sheet
+  sheet = ss.insertSheet(reportSheetName);
 
   // Title
   sheet.getRange('A1').setValue('VOLUNTEER COMPLIANCE REPORT')
@@ -146,7 +161,7 @@ function showComplianceReport() {
   sheet.activate();
 
   ui.alert('Report Generated',
-    'Compliance report has been generated in the Reports sheet.\n\n' +
+    `Compliance report has been generated in sheet: "${reportSheetName}"\n\n` +
     'Requirements:\n' +
     '- Regular shifts: Based on volunteer requirement (1, 2, or 3)\n' +
     '- Super Bingo: 1 per fiscal year (required)\n' +
@@ -170,22 +185,38 @@ function showCoverageReport() {
 
   const data = JSON.parse(lastVerification);
   const shiftCoverage = data.shiftCoverage;
+  const verificationDate = data.verificationDate || new Date().toISOString();
+  const scheduleSheetName = data.scheduleSheetName || '';
 
-  // Generate report in Reports sheet
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Reports');
-  sheet.clear();
+  // Extract month from schedule name
+  const monthMatch = scheduleSheetName.match(/^(.+) Schedule$/);
+  const monthName = monthMatch ? monthMatch[1] : Utilities.formatDate(new Date(verificationDate), Session.getScriptTimeZone(), 'MMM yyyy');
+
+  // Create dated report sheet (append to compliance report if it exists)
+  const reportSheetName = `Report - ${monthName}`;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Get or create the report sheet
+  let sheet = ss.getSheetByName(reportSheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(reportSheetName);
+  }
+
+  // Find where to add coverage report (after compliance report if it exists)
+  const lastRow = sheet.getLastRow();
+  const startRow = lastRow > 0 ? lastRow + 3 : 1;
 
   // Title
-  sheet.getRange('A1').setValue('SHIFT COVERAGE REPORT')
+  sheet.getRange(startRow, 1).setValue('SHIFT COVERAGE REPORT')
     .setFontWeight('bold')
     .setFontSize(16)
     .setBackground('#ec4899')
     .setFontColor('#ffffff');
 
-  sheet.getRange('A2').setValue('Generated: ' + new Date().toLocaleString())
+  sheet.getRange(startRow + 1, 1).setValue('Generated: ' + new Date().toLocaleString())
     .setFontStyle('italic');
 
-  let row = 4;
+  let row = startRow + 3;
 
   // Uncovered shifts
   const uncovered = shiftCoverage.filter(sc => !sc.hasAnySignups);
@@ -293,7 +324,7 @@ function showCoverageReport() {
   sheet.autoResizeColumns(1, 7);
   sheet.activate();
 
-  ui.alert('Report Generated', 'Coverage report has been generated in the Reports sheet.', ui.ButtonSet.OK);
+  ui.alert('Report Generated', `Coverage report has been added to sheet: "${reportSheetName}"`, ui.ButtonSet.OK);
 }
 
 /**

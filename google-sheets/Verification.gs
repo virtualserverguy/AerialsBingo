@@ -19,12 +19,58 @@ function runVerification() {
   }
 
   try {
+    // Find all schedule sheets
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const allSheets = ss.getSheets();
+    const scheduleSheets = allSheets
+      .filter(sheet => sheet.getName().endsWith(' Schedule'))
+      .map(sheet => sheet.getName())
+      .sort()
+      .reverse(); // Most recent first
+
+    if (scheduleSheets.length === 0) {
+      ui.alert('No Schedule', 'Please generate a monthly schedule first.', ui.ButtonSet.OK);
+      return;
+    }
+
+    // Ask which schedule to verify against
+    let scheduleSheetName;
+    if (scheduleSheets.length === 1) {
+      scheduleSheetName = scheduleSheets[0];
+    } else {
+      const result = ui.prompt(
+        'Select Schedule',
+        `Found ${scheduleSheets.length} schedule sheets. Enter the month to verify (e.g., "Jan 2025") or press OK to use the most recent (${scheduleSheets[0]}):`,
+        ui.ButtonSet.OK_CANCEL
+      );
+
+      if (result.getSelectedButton() !== ui.Button.OK) {
+        return;
+      }
+
+      const input = result.getResponseText().trim();
+      if (!input) {
+        scheduleSheetName = scheduleSheets[0]; // Use most recent
+      } else {
+        // Find matching sheet
+        const match = scheduleSheets.find(name =>
+          name.toLowerCase().includes(input.toLowerCase())
+        );
+        if (match) {
+          scheduleSheetName = match;
+        } else {
+          ui.alert('Not Found', `No schedule sheet found matching "${input}". Available sheets:\n\n${scheduleSheets.join('\n')}`, ui.ButtonSet.OK);
+          return;
+        }
+      }
+    }
+
     const volunteers = getVolunteers();
-    const shifts = getMonthlyShifts();
+    const shifts = getMonthlyShifts(scheduleSheetName);
     const signups = getSignups();
 
     if (shifts.length === 0) {
-      ui.alert('No Schedule', 'Please generate a monthly schedule first.', ui.ButtonSet.OK);
+      ui.alert('No Schedule', `The schedule sheet "${scheduleSheetName}" is empty.`, ui.ButtonSet.OK);
       return;
     }
 
@@ -33,8 +79,11 @@ function runVerification() {
       return;
     }
 
+    // Archive the import data
+    archiveImportData(scheduleSheetName);
+
     // Run verification
-    const results = verifyCompliance(volunteers, shifts, signups);
+    const results = verifyCompliance(volunteers, shifts, signups, scheduleSheetName);
 
     // Show summary
     const summary = `
@@ -70,7 +119,7 @@ View detailed reports using the menu:
 /**
  * Verify volunteer compliance and shift coverage
  */
-function verifyCompliance(volunteers, shifts, signups) {
+function verifyCompliance(volunteers, shifts, signups, scheduleSheetName) {
   // Build shift type map
   const shiftTypeMap = {};
   shifts.forEach(shift => {
@@ -176,7 +225,9 @@ function verifyCompliance(volunteers, shifts, signups) {
     JSON.stringify({
       volunteerSignups: volunteerSignups,
       shiftCoverage: shiftCoverage,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      verificationDate: new Date().toISOString(),
+      scheduleSheetName: scheduleSheetName
     })
   );
 
@@ -223,9 +274,15 @@ function getVolunteers() {
 
 /**
  * Get monthly shifts from sheet
+ * @param {string} scheduleSheetName - Name of the schedule sheet (e.g., "Jan 2025 Schedule")
  */
-function getMonthlyShifts() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Monthly Schedule');
+function getMonthlyShifts(scheduleSheetName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(scheduleSheetName || 'Monthly Schedule');
+
+  if (!sheet) {
+    return [];
+  }
+
   const lastRow = sheet.getLastRow();
 
   if (lastRow < 2) {
@@ -248,6 +305,56 @@ function getMonthlyShifts() {
       workersNeeded: parseInt(row[8]) || 0,
       notes: row[9]
     }));
+}
+
+/**
+ * Archive import data to a dated sheet
+ * @param {string} scheduleSheetName - Name of the schedule sheet being verified
+ */
+function archiveImportData(scheduleSheetName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const importSheet = ss.getSheetByName('SignupGenius Import');
+
+  if (!importSheet || importSheet.getLastRow() < 2) {
+    return; // Nothing to archive
+  }
+
+  // Extract month from schedule name (e.g., "Jan 2025" from "Jan 2025 Schedule")
+  const monthMatch = scheduleSheetName.match(/^(.+) Schedule$/);
+  const monthName = monthMatch ? monthMatch[1] : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMM yyyy');
+
+  // Create archive sheet name with timestamp
+  const timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  const archiveSheetName = `Import - ${monthName}`;
+
+  // Check if archive sheet already exists
+  let archiveSheet = ss.getSheetByName(archiveSheetName);
+
+  if (!archiveSheet) {
+    // Create new archive sheet
+    archiveSheet = ss.insertSheet(archiveSheetName);
+
+    // Add headers with import timestamp column
+    const headers = [['Import Date/Time', 'Start DateTime', 'End DateTime', 'Event Name', 'Qty', 'Role', 'First Name', 'Last Name', 'Email', 'Comment', 'Signup Time']];
+    archiveSheet.getRange(1, 1, 1, 11).setValues(headers);
+    archiveSheet.getRange(1, 1, 1, 11)
+      .setFontWeight('bold')
+      .setBackground('#8b5cf6')
+      .setFontColor('#ffffff');
+    archiveSheet.setFrozenRows(1);
+  }
+
+  // Copy data from import sheet with timestamp
+  const lastRow = importSheet.getLastRow();
+  if (lastRow > 1) {
+    const data = importSheet.getRange(2, 1, lastRow - 1, 10).getValues();
+    const archiveLastRow = archiveSheet.getLastRow();
+
+    // Add timestamp to each row
+    const dataWithTimestamp = data.map(row => [timestamp, ...row]);
+
+    archiveSheet.getRange(archiveLastRow + 1, 1, dataWithTimestamp.length, 11).setValues(dataWithTimestamp);
+  }
 }
 
 /**

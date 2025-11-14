@@ -18,68 +18,51 @@ function generateMonthlySchedule() {
     return;
   }
 
-  // Ask user which month to generate
-  const result = ui.prompt(
-    'Generate Monthly Schedule',
-    'Enter month and year (e.g., "January 2025" or "next month"):',
-    ui.ButtonSet.OK_CANCEL
-  );
-
-  if (result.getSelectedButton() !== ui.Button.OK) {
-    return;
-  }
-
-  const input = result.getResponseText().trim().toLowerCase();
-  let targetDate;
-
-  if (input === 'next month' || input === '') {
-    targetDate = new Date();
-    targetDate.setMonth(targetDate.getMonth() + 1);
-    targetDate.setDate(1);
-  } else {
-    try {
-      targetDate = new Date(input);
-      if (isNaN(targetDate.getTime())) {
-        throw new Error('Invalid date');
-      }
-    } catch (e) {
-      ui.alert('Invalid date format. Please use format like "January 2025" or "next month"');
-      return;
-    }
-  }
-
-  const monthName = Utilities.formatDate(targetDate, Session.getScriptTimeZone(), 'MMMM yyyy');
-
-  const confirm = ui.alert(
-    'Generate Schedule',
-    `Generate schedule for ${monthName}?\n\nThis will replace any existing schedule for this month.`,
-    ui.ButtonSet.YES_NO
-  );
-
-  if (confirm !== ui.Button.YES) {
-    return;
-  }
-
-  try {
-    generateScheduleForMonth(targetDate);
-    ui.alert('Success!', `Schedule generated for ${monthName}`, ui.ButtonSet.OK);
-  } catch (e) {
-    ui.alert('Error', `Failed to generate schedule: ${e.message}`, ui.ButtonSet.OK);
-  }
+  // Show month picker dialog
+  showMonthPicker('Generate Monthly Schedule');
 }
 
 /**
  * Generate schedule for a specific month
+ * @param {Date} targetDate - The month to generate schedule for
+ * @param {string} sheetName - Name for the new sheet (e.g., "Jan 2025 Schedule")
+ * @param {Sheet} existingSheet - Existing sheet to replace, or null to create new
  */
-function generateScheduleForMonth(targetDate) {
+function generateScheduleForMonth(targetDate, sheetName, existingSheet) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const scheduleSheet = ss.getSheetByName('Monthly Schedule');
 
-  // Clear existing schedule (keep headers)
-  const lastRow = scheduleSheet.getLastRow();
-  if (lastRow > 1) {
-    scheduleSheet.deleteRows(2, lastRow - 1);
+  // Delete existing sheet if replacing
+  if (existingSheet) {
+    ss.deleteSheet(existingSheet);
   }
+
+  // Create new sheet for this month
+  const scheduleSheet = ss.insertSheet(sheetName);
+
+  // Set up headers (same as Monthly Schedule template)
+  const headers = [['Date', 'Day', 'Time', 'Location', 'Event Type', 'Callers', 'Managers', 'Asst Mgrs', 'Workers', 'Notes']];
+  scheduleSheet.getRange(1, 1, 1, 10).setValues(headers);
+
+  // Format headers
+  scheduleSheet.getRange(1, 1, 1, 10)
+    .setFontWeight('bold')
+    .setBackground('#e2e8f0')
+    .setHorizontalAlignment('center');
+
+  // Set column widths
+  scheduleSheet.setColumnWidth(1, 100); // Date
+  scheduleSheet.setColumnWidth(2, 90);  // Day
+  scheduleSheet.setColumnWidth(3, 80);  // Time
+  scheduleSheet.setColumnWidth(4, 120); // Location
+  scheduleSheet.setColumnWidth(5, 100); // Event Type
+  scheduleSheet.setColumnWidth(6, 70);  // Callers
+  scheduleSheet.setColumnWidth(7, 80);  // Managers
+  scheduleSheet.setColumnWidth(8, 80);  // Asst Mgrs
+  scheduleSheet.setColumnWidth(9, 70);  // Workers
+  scheduleSheet.setColumnWidth(10, 200); // Notes
+
+  // Freeze header row
+  scheduleSheet.setFrozenRows(1);
 
   // Get templates and special events
   const templates = getShiftTemplates();
@@ -404,4 +387,123 @@ function clearMonthlyData() {
     .setFontSize(14);
 
   ui.alert('Data Cleared', 'Monthly data has been cleared. You can now generate a new schedule.', ui.ButtonSet.OK);
+}
+
+/**
+ * Show month picker dialog with dropdown
+ * @param {string} title - Dialog title
+ */
+function showMonthPicker(title) {
+  const ui = SpreadsheetApp.getUi();
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <base target="_top">
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          select, button { font-size: 14px; padding: 8px; margin: 5px 0; }
+          select { width: 100%; max-width: 200px; }
+          button { width: 100%; max-width: 200px; margin-top: 10px; }
+          .button-group { margin-top: 20px; }
+          #submitBtn { background-color: #4285f4; color: white; border: none; border-radius: 3px; cursor: pointer; }
+          #submitBtn:hover { background-color: #357ae8; }
+          #cancelBtn { background-color: #f1f1f1; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; }
+          #cancelBtn:hover { background-color: #e1e1e1; }
+        </style>
+      </head>
+      <body>
+        <div>
+          <label for="month">Select Month:</label><br>
+          <select id="month">
+            <option value="0">January</option>
+            <option value="1">February</option>
+            <option value="2">March</option>
+            <option value="3">April</option>
+            <option value="4">May</option>
+            <option value="5">June</option>
+            <option value="6">July</option>
+            <option value="7">August</option>
+            <option value="8">September</option>
+            <option value="9">October</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+          </select>
+        </div>
+        <div style="margin-top: 15px;">
+          <label for="year">Select Year:</label><br>
+          <select id="year"></select>
+        </div>
+        <div class="button-group">
+          <button id="submitBtn" onclick="submit()">Generate Schedule</button>
+          <button id="cancelBtn" onclick="google.script.host.close()">Cancel</button>
+        </div>
+        <script>
+          // Populate year dropdown (current year - 1 to current year + 2)
+          const yearSelect = document.getElementById('year');
+          const currentYear = new Date().getFullYear();
+          for (let year = currentYear - 1; year <= currentYear + 2; year++) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            if (year === currentYear) option.selected = true;
+            yearSelect.appendChild(option);
+          }
+
+          // Set current month as default
+          const currentMonth = new Date().getMonth();
+          document.getElementById('month').value = currentMonth;
+
+          function submit() {
+            const month = parseInt(document.getElementById('month').value);
+            const year = parseInt(document.getElementById('year').value);
+            google.script.run
+              .withSuccessHandler(() => google.script.host.close())
+              .processMonthSelection(month, year);
+          }
+        </script>
+      </body>
+    </html>
+  `;
+
+  const html = HtmlService.createHtmlOutput(htmlContent)
+    .setWidth(300)
+    .setHeight(250);
+
+  ui.showModalDialog(html, title);
+}
+
+/**
+ * Process month selection from dialog and generate schedule
+ * Called by the month picker dialog
+ */
+function processMonthSelection(month, year) {
+  const ui = SpreadsheetApp.getUi();
+  const targetDate = new Date(year, month, 1);
+  const monthName = Utilities.formatDate(targetDate, Session.getScriptTimeZone(), 'MMMM yyyy');
+
+  // Check if sheet for this month already exists
+  const sheetName = Utilities.formatDate(targetDate, Session.getScriptTimeZone(), 'MMM yyyy') + ' Schedule';
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const existingSheet = ss.getSheetByName(sheetName);
+
+  if (existingSheet) {
+    const confirm = ui.alert(
+      'Sheet Already Exists',
+      `A schedule for ${monthName} already exists.\n\nDo you want to replace it?`,
+      ui.ButtonSet.YES_NO
+    );
+    if (confirm !== ui.Button.YES) {
+      return;
+    }
+  }
+
+  try {
+    generateScheduleForMonth(targetDate, sheetName, existingSheet);
+    ui.alert('Success!', `Schedule generated for ${monthName}\n\nSheet: "${sheetName}"`, ui.ButtonSet.OK);
+    // Activate the new sheet
+    ss.getSheetByName(sheetName).activate();
+  } catch (e) {
+    ui.alert('Error', `Failed to generate schedule: ${e.message}`, ui.ButtonSet.OK);
+  }
 }
