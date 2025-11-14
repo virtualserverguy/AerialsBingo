@@ -252,6 +252,7 @@ function getMonthlyShifts() {
 
 /**
  * Get signups from SignupGenius import
+ * Format: Start DateTime, End DateTime, Event Name, Qty, Role, First Name, Last Name, Email, Comment, Signup Time
  */
 function getSignups() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('SignupGenius Import');
@@ -261,39 +262,59 @@ function getSignups() {
     return [];
   }
 
-  const data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+  const data = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
 
   return data
-    .filter(row => row[0] && row[1]) // Must have name and email
+    .filter(row => row[5] && row[6] && row[7]) // Must have First Name, Last Name, and Email
     .map(row => {
-      let role = parseRole(row[2]); // Item/Role column
-
-      // Parse date
+      // Parse date and time from "12/02/2025 05:30 PM" format
       let dateStr = '';
+      let timeStr = '';
       try {
-        const dateObj = new Date(row[3]);
-        dateStr = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        const startDateTime = new Date(row[0]); // Start DateTime column
+        dateStr = Utilities.formatDate(startDateTime, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        timeStr = Utilities.formatDate(startDateTime, Session.getScriptTimeZone(), 'h:mm a');
       } catch (e) {
-        dateStr = String(row[3]);
+        dateStr = String(row[0]);
+        timeStr = '';
       }
 
+      // Combine First Name and Last Name
+      const name = `${row[5]} ${row[6]}`.trim();
+
+      // Get role from Role column
+      const role = parseRole(row[4]);
+
       return {
-        name: row[0],
-        email: String(row[1]).toLowerCase(),
+        name: name,
+        email: String(row[7]).toLowerCase(),
         role: role,
         date: dateStr,
-        time: row[4],
-        location: row[5]
+        time: timeStr,
+        location: row[2] // Event Name
       };
     });
 }
 
 /**
- * Parse role from SignupGenius item string
+ * Parse role from SignupGenius role string
+ * Handles: "Manager", "Assistant Manager", "Caller", "Floor Worker"
  */
-function parseRole(itemStr) {
-  const str = String(itemStr).toLowerCase();
+function parseRole(roleStr) {
+  const str = String(roleStr).toLowerCase().trim();
 
+  // Handle exact matches first
+  if (str === 'manager') {
+    return 'Manager';
+  } else if (str === 'assistant manager') {
+    return 'Assistant Manager';
+  } else if (str === 'caller') {
+    return 'Caller';
+  } else if (str === 'floor worker' || str === 'worker') {
+    return 'Worker';
+  }
+
+  // Fallback to contains logic for flexibility
   if (str.includes('manager') && !str.includes('assistant')) {
     return 'Manager';
   } else if (str.includes('assistant') || str.includes('asst')) {
@@ -315,10 +336,10 @@ function showImportDialog() {
     'Import SignupGenius Data',
     'To import data:\n\n' +
     '1. Export your SignupGenius data as CSV\n' +
-    '2. Open the CSV file and copy all the data\n' +
+    '2. Open the CSV file and copy all the data (including headers)\n' +
     '3. Go to the "SignupGenius Import" sheet\n' +
-    '4. Paste the data starting in cell A2\n' +
-    '5. The data should include: Name, Email, Item/Role, Date, Time, Location\n\n' +
+    '4. Paste the data starting in cell A1 (replace existing headers)\n' +
+    '5. Expected columns: Start DateTime, End DateTime, Event Name, Qty, Role, First Name, Last Name, Email, Comment, Signup Time\n\n' +
     'Then come back and run: Bingo Scheduler > Run Verification',
     ui.ButtonSet.OK
   );

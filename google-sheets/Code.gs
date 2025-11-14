@@ -288,20 +288,26 @@ function setupSignupGeniusImportSheet() {
   sheet.clear();
 
   const headers = [
-    ['Name', 'Email', 'Item/Role', 'Date', 'Time', 'Location']
+    ['Start DateTime', 'End DateTime', 'Event Name', 'Qty', 'Role', 'First Name', 'Last Name', 'Email', 'Comment', 'Signup Time']
   ];
 
-  sheet.getRange('A1:F1').setValues(headers)
+  sheet.getRange('A1:J1').setValues(headers)
     .setBackground('#8b5cf6')
     .setFontColor('#ffffff')
     .setFontWeight('bold');
 
   sheet.setFrozenRows(1);
-  sheet.autoResizeColumns(1, 6);
+  sheet.autoResizeColumns(1, 10);
 
   // Add instructions
-  sheet.getRange('A3').setValue('Paste your SignupGenius export data here (starting from row 2)');
-  sheet.getRange('A3').setFontStyle('italic').setFontColor('#666666');
+  sheet.getRange('A3').setValue('Paste your SignupGenius export data here starting from row 2.')
+    .setFontStyle('italic')
+    .setFontColor('#666666');
+
+  sheet.getRange('A4').setValue('Expected columns: Start DateTime, End DateTime, Event Name, Qty, Role, First Name, Last Name, Email, Comment, Signup Time')
+    .setFontStyle('italic')
+    .setFontColor('#666666')
+    .setFontSize(9);
 }
 
 /**

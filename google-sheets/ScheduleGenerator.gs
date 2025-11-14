@@ -321,6 +321,7 @@ function addOneTimeShift(data) {
     dayOfWeek,
     data.time,
     data.location,
+    'Regular', // Event Type - defaults to Regular for one-time shifts
     data.callers,
     data.managers,
     data.asstManagers,
@@ -348,7 +349,7 @@ function addOneTimeShift(data) {
     sheet.insertRowBefore(insertRow);
   }
 
-  sheet.getRange(insertRow, 1, 1, 9).setValues([newRow]);
+  sheet.getRange(insertRow, 1, 1, 10).setValues([newRow]);
   sheet.getRange(insertRow, 1).setNumberFormat('yyyy-mm-dd');
 
   // Reapply alternating colors
@@ -356,9 +357,9 @@ function addOneTimeShift(data) {
   for (let i = 0; i < totalRows; i++) {
     const row = i + 2;
     if (i % 2 === 0) {
-      sheet.getRange(row, 1, 1, 9).setBackground('#f9fafb');
+      sheet.getRange(row, 1, 1, 10).setBackground('#f9fafb');
     } else {
-      sheet.getRange(row, 1, 1, 9).setBackground('#ffffff');
+      sheet.getRange(row, 1, 1, 10).setBackground('#ffffff');
     }
   }
 }
