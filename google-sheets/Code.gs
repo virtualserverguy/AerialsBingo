@@ -7,6 +7,8 @@
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🎯 Bingo Scheduler')
+    .addItem('🚀 Initial Setup (Run First!)', 'setupSpreadsheet')
+    .addSeparator()
     .addItem('📅 Generate This Month\'s Schedule', 'generateMonthlySchedule')
     .addSeparator()
     .addItem('📥 Import SignupGenius Data', 'showImportDialog')
@@ -21,6 +23,22 @@ function onOpen() {
     .addSeparator()
     .addItem('❓ Help & Setup Guide', 'showHelpDialog')
     .addToUi();
+}
+
+/**
+ * Check if all required sheets exist
+ */
+function checkSheetsExist() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const requiredSheets = ['Volunteers', 'Shift Templates', 'Monthly Schedule',
+                          'SignupGenius Import', 'Reports', 'Config'];
+
+  for (let sheetName of requiredSheets) {
+    if (!ss.getSheetByName(sheetName)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**

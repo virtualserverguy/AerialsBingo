@@ -8,6 +8,16 @@
 function generateMonthlySchedule() {
   const ui = SpreadsheetApp.getUi();
 
+  // Check if sheets are set up
+  if (!checkSheetsExist()) {
+    ui.alert(
+      'Setup Required',
+      'Please run "🚀 Initial Setup (Run First!)" from the menu before generating schedules.',
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
   // Ask user which month to generate
   const result = ui.prompt(
     'Generate Monthly Schedule',

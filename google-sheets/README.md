@@ -49,8 +49,10 @@ A fully integrated Google Workspace solution for managing volunteer bingo shift 
    - Click "Go to Bingo Shift Scheduler (unsafe)"
    - Click "Allow"
 
-5. After granting permissions, go to **🎯 Bingo Scheduler > Help & Setup Guide**
-6. This will create all the necessary sheets with sample data
+5. **IMPORTANT:** After granting permissions, click **🎯 Bingo Scheduler > 🚀 Initial Setup (Run First!)**
+   - This creates all necessary sheets with sample data
+   - You only need to do this once
+   - All other menu items will check for this setup first
 
 ### 4. Customize Your Data
 

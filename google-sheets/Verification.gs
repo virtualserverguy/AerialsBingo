@@ -8,6 +8,16 @@
 function runVerification() {
   const ui = SpreadsheetApp.getUi();
 
+  // Check if sheets are set up
+  if (!checkSheetsExist()) {
+    ui.alert(
+      'Setup Required',
+      'Please run "🚀 Initial Setup (Run First!)" from the menu first.',
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
   try {
     const volunteers = getVolunteers();
     const shifts = getMonthlyShifts();
