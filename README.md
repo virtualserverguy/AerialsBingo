@@ -4,11 +4,40 @@ Automated verification system for bingo hall volunteer shift scheduling.
 
 ## Features
 
+- **Google Sheets version** - Fully integrated with Google Workspace
+- **Monthly workflow** - Generate schedules month-by-month, keeps data clean
+- **Recurring shifts** - Set Tuesday/Thursday patterns that auto-generate
+- **Special events** - Handle quarterly Super Bingo nights with different staffing
 - Web-based interfaces for managing volunteers and shift schedules
 - Track volunteer shift requirements (1, 2, or 3 nights)
 - Verify role coverage (caller, manager, assistant manager, workers)
 - Import data from SignupGenius CSV exports
 - Generate compliance reports showing who's met requirements and which shifts need filling
+
+## Choose Your Version
+
+### Google Sheets (Recommended for Google Workspace Users)
+
+✅ **Best for:** Organizations using Google Workspace
+✅ **Advantages:**
+- All-in-one solution - no file downloads/uploads
+- Monthly refresh keeps spreadsheet clean
+- Recurring shift templates (every Tuesday/Thursday)
+- Custom menu for easy access
+- Real-time collaboration
+
+**Setup:** See [`google-sheets/README.md`](google-sheets/README.md) for complete instructions
+
+### Python + Web Interfaces (Advanced)
+
+✅ **Best for:** Technical users or those who prefer local tools
+✅ **Advantages:**
+- Run verification locally
+- Full control over data
+- Can customize Python code
+- Works offline
+
+**Setup:** See instructions below
 
 ## Quick Start
 
