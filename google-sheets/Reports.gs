@@ -34,9 +34,16 @@ function showComplianceReport() {
 
   let row = 4;
 
-  // Non-compliant volunteers
+  // Non-compliant volunteers (missing ANY of the three requirements)
   const nonCompliant = Object.values(volunteerSignups)
-    .filter(vs => vs.signups.length < vs.required)
+    .filter(vs => {
+      const regularReq = vs.requiredRegular || vs.required || 0;
+      const regularDone = vs.regularCount || 0;
+      const superBingoDone = vs.superBingoCount || 0;
+      const mustGoDone = vs.mustGoCount || 0;
+
+      return (regularDone < regularReq) || (superBingoDone < 1) || (mustGoDone < 1);
+    })
     .sort((a, b) => a.volunteer.name.localeCompare(b.volunteer.name));
 
   if (nonCompliant.length > 0) {
@@ -48,32 +55,55 @@ function showComplianceReport() {
 
     row++;
 
-    const headers = [['Name', 'Email', 'Required', 'Total', 'Regular', 'Super Bingo', 'Must Go', 'Weighted', 'Shortfall']];
-    sheet.getRange(row, 1, 1, 9).setValues(headers)
+    const headers = [['Name', 'Email', 'Regular Req', 'Regular Done', 'Regular Status', 'Super Bingo', 'SB Status', 'Must Go', 'MG Status', 'Overall']];
+    sheet.getRange(row, 1, 1, 10).setValues(headers)
       .setFontWeight('bold')
       .setBackground('#eee');
 
     row++;
 
-    const data = nonCompliant.map(vs => [
-      vs.volunteer.name,
-      vs.volunteer.email,
-      vs.required,
-      vs.signups.length,
-      vs.regularCount || 0,
-      vs.superBingoCount || 0,
-      vs.mustGoCount || 0,
-      (vs.weightedTotal || 0).toFixed(1),
-      vs.required - vs.signups.length
-    ]);
+    const data = nonCompliant.map(vs => {
+      const regularDone = vs.regularCount || 0;
+      const regularReq = vs.requiredRegular || vs.required || 0;
+      const regularStatus = regularDone >= regularReq ? '✓' : `Need ${regularReq - regularDone}`;
 
-    sheet.getRange(row, 1, data.length, 9).setValues(data);
+      const superBingoDone = vs.superBingoCount || 0;
+      const superBingoStatus = superBingoDone >= 1 ? '✓' : 'Need 1';
+
+      const mustGoDone = vs.mustGoCount || 0;
+      const mustGoStatus = mustGoDone >= 1 ? '✓' : 'Need 1';
+
+      const allMet = (regularDone >= regularReq) && (superBingoDone >= 1) && (mustGoDone >= 1);
+      const overallStatus = allMet ? '✓ Compliant' : '⚠️ Missing';
+
+      return [
+        vs.volunteer.name,
+        vs.volunteer.email,
+        regularReq,
+        regularDone,
+        regularStatus,
+        `${superBingoDone}/1`,
+        superBingoStatus,
+        `${mustGoDone}/1`,
+        mustGoStatus,
+        overallStatus
+      ];
+    });
+
+    sheet.getRange(row, 1, data.length, 10).setValues(data);
     row += data.length + 2;
   }
 
-  // Compliant volunteers
+  // Compliant volunteers (met ALL three requirements)
   const compliant = Object.values(volunteerSignups)
-    .filter(vs => vs.signups.length >= vs.required)
+    .filter(vs => {
+      const regularReq = vs.requiredRegular || vs.required || 0;
+      const regularDone = vs.regularCount || 0;
+      const superBingoDone = vs.superBingoCount || 0;
+      const mustGoDone = vs.mustGoCount || 0;
+
+      return (regularDone >= regularReq) && (superBingoDone >= 1) && (mustGoDone >= 1);
+    })
     .sort((a, b) => a.volunteer.name.localeCompare(b.volunteer.name));
 
   if (compliant.length > 0) {
@@ -85,31 +115,44 @@ function showComplianceReport() {
 
     row++;
 
-    const headers = [['Name', 'Email', 'Required', 'Total', 'Regular', 'Super Bingo', 'Must Go', 'Weighted']];
-    sheet.getRange(row, 1, 1, 8).setValues(headers)
+    const headers = [['Name', 'Email', 'Regular Req', 'Regular Done', 'Super Bingo', 'Must Go', 'Total Shifts']];
+    sheet.getRange(row, 1, 1, 7).setValues(headers)
       .setFontWeight('bold')
       .setBackground('#eee');
 
     row++;
 
-    const data = compliant.map(vs => [
-      vs.volunteer.name,
-      vs.volunteer.email,
-      vs.required,
-      vs.signups.length,
-      vs.regularCount || 0,
-      vs.superBingoCount || 0,
-      vs.mustGoCount || 0,
-      (vs.weightedTotal || 0).toFixed(1)
-    ]);
+    const data = compliant.map(vs => {
+      const regularDone = vs.regularCount || 0;
+      const regularReq = vs.requiredRegular || vs.required || 0;
+      const superBingoDone = vs.superBingoCount || 0;
+      const mustGoDone = vs.mustGoCount || 0;
 
-    sheet.getRange(row, 1, data.length, 8).setValues(data);
+      return [
+        vs.volunteer.name,
+        vs.volunteer.email,
+        regularReq,
+        regularDone,
+        `${superBingoDone}/1 ✓`,
+        `${mustGoDone}/1 ✓`,
+        vs.signups.length
+      ];
+    });
+
+    sheet.getRange(row, 1, data.length, 7).setValues(data);
   }
 
-  sheet.autoResizeColumns(1, 9);
+  sheet.autoResizeColumns(1, 10);
   sheet.activate();
 
-  ui.alert('Report Generated', 'Compliance report has been generated in the Reports sheet.\n\nNote: Weighted values reflect Super Bingo (1.5x) and Must Go (2x) multipliers.', ui.ButtonSet.OK);
+  ui.alert('Report Generated',
+    'Compliance report has been generated in the Reports sheet.\n\n' +
+    'Requirements:\n' +
+    '- Regular shifts: Based on volunteer requirement (1, 2, or 3)\n' +
+    '- Super Bingo: 1 per fiscal year (required)\n' +
+    '- Must Go: 1 per fiscal year (required)\n\n' +
+    'All three buckets must be met for compliance.',
+    ui.ButtonSet.OK);
 }
 
 /**

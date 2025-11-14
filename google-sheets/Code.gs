@@ -239,8 +239,8 @@ function setupConfigSheet() {
     ['Current Season End', '2025-06-30', 'End of volunteer season (June)'],
     ['Default Location', 'Main Hall', 'Default location for shifts'],
     ['Default Time', '6:00 PM', 'Default shift time'],
-    ['Super Bingo Value', '1.5', 'Multiplier for Super Bingo shifts (1.5x regular)'],
-    ['Must Go Value', '2.0', 'Multiplier for Must Go shifts (2x regular)'],
+    ['Required Super Bingo', '1', 'Number of Super Bingo shifts required per year'],
+    ['Required Must Go', '1', 'Number of Must Go shifts required per year'],
   ];
 
   sheet.getRange(1, 1, config.length, 3).setValues(config);

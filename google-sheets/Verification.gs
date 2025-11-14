@@ -71,11 +71,6 @@ View detailed reports using the menu:
  * Verify volunteer compliance and shift coverage
  */
 function verifyCompliance(volunteers, shifts, signups) {
-  // Get shift multipliers from config
-  const config = getConfig();
-  const superBingoValue = parseFloat(config['Super Bingo Value']) || 1.5;
-  const mustGoValue = parseFloat(config['Must Go Value']) || 2.0;
-
   // Build shift type map
   const shiftTypeMap = {};
   shifts.forEach(shift => {
@@ -92,8 +87,9 @@ function verifyCompliance(volunteers, shifts, signups) {
       regularCount: 0,
       superBingoCount: 0,
       mustGoCount: 0,
-      weightedTotal: 0,
-      required: v.requiredShifts
+      requiredRegular: v.requiredShifts,
+      requiredSuperBingo: 1,  // Each volunteer must do 1 Super Bingo per year
+      requiredMustGo: 1       // Each volunteer must do 1 Must Go per year
     };
   });
 
@@ -109,28 +105,28 @@ function verifyCompliance(volunteers, shifts, signups) {
 
       volunteerSignups[email].signups.push(signup);
 
-      // Count by type
+      // Count by type (separate buckets)
       if (eventType === 'Super Bingo') {
         volunteerSignups[email].superBingoCount++;
-        volunteerSignups[email].weightedTotal += superBingoValue;
       } else if (eventType === 'Must Go') {
         volunteerSignups[email].mustGoCount++;
-        volunteerSignups[email].weightedTotal += mustGoValue;
       } else {
         volunteerSignups[email].regularCount++;
-        volunteerSignups[email].weightedTotal += 1;
       }
     }
   });
 
-  // Calculate volunteer compliance
+  // Calculate volunteer compliance (must meet ALL three requirements)
   let compliantCount = 0;
   let nonCompliantCount = 0;
 
   Object.values(volunteerSignups).forEach(vs => {
-    // Check if total shifts (not weighted) meets requirement
-    const totalShifts = vs.signups.length;
-    if (totalShifts >= vs.required) {
+    const regularCompliant = vs.regularCount >= vs.requiredRegular;
+    const superBingoCompliant = vs.superBingoCount >= vs.requiredSuperBingo;
+    const mustGoCompliant = vs.mustGoCount >= vs.requiredMustGo;
+
+    // Fully compliant only if all three buckets are met
+    if (regularCompliant && superBingoCompliant && mustGoCompliant) {
       compliantCount++;
     } else {
       nonCompliantCount++;
